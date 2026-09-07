@@ -1,250 +1,448 @@
 # 🔬 Lab Calibration System
 
-## Sensor Drift Analysis & Calibration Prototype
+An end-to-end experimental platform for **sensor drift analysis, calibration modeling, and laboratory instrument management**.
 
-A Python-based machine-learning prototype for analyzing sensor drift, measuring temporal distribution shift, and evaluating drift-compensation strategies on sensor-array data.
-
-> **Current version: V1 — Sensor Drift Analysis Prototype**
+This project is being developed incrementally, starting with data-driven sensor analysis and progressing toward a complete calibration platform for laboratory instruments.
 
 ---
 
-## 🎯 Project Overview
+## 🚀 Project Vision
 
-Sensors can behave differently over time.
+Laboratory sensors and instruments can change their behavior over time because of factors such as:
 
-A machine-learning model may perform extremely well when training and testing data are randomly mixed, but its performance can decrease when it encounters measurements collected later under changed sensor conditions.
+* Sensor aging
+* Environmental changes
+* Measurement drift
+* Temperature and humidity variation
+* Instrument degradation
+* Changing operating conditions
 
-This project investigates that problem from first principles:
+The long-term goal of this project is to build a software platform that can:
 
 ```text
-Sensor measurements
-        ↓
-Data processing
-        ↓
-Drift analysis
-        ↓
-Machine-learning baseline
-        ↓
-Future-batch validation
-        ↓
-Drift compensation experiment
-        ↓
-Performance comparison
-        ↓
-User-facing Streamlit dashboard
+Raw Sensor Measurements
+          ↓
+Data Quality Analysis
+          ↓
+Drift Detection
+          ↓
+Calibration Model
+          ↓
+Calibrated Measurement
+          ↓
+Instrument History
+          ↓
+Automated Calibration
+          ↓
+Multi-Instrument Platform
 ```
 
-The objective of V1 is to determine whether sensor measurements exhibit temporal drift and whether a simple compensation strategy can improve model generalization to future batches.
+The project is currently at **V2 — Calibration Prototype**.
 
 ---
 
-# 🚀 V1 Results
+# 📌 Current Status
 
-## Random-Split Baseline
-
-A Logistic Regression classifier with feature standardization achieved:
-
-**98.99% accuracy**
-
-on a random 80/20 train-test split.
-
-However, random splitting can allow measurements from similar time periods to appear in both training and testing data.
-
-Therefore, a stricter temporal evaluation was performed.
+| Version | Status     | Description                           |
+| ------- | ---------- | ------------------------------------- |
+| V1.0.0  | ✅ Complete | Sensor drift analysis                 |
+| V2.0.0  | ✅ Complete | CO sensor calibration prototype       |
+| V3.0.0  | 🔜 Planned | Database + instrument management      |
+| V4.0.0  | 🔜 Planned | API + scheduling                      |
+| V5.0.0  | 🔜 Planned | Multi-instrument platform             |
+| V6.0.0  | 🔜 Planned | Real hardware + laboratory deployment |
 
 ---
 
-## ⏱️ Future-Batch Evaluation
+# 🧪 V1 — Sensor Drift Analysis
 
-The model was trained using:
+The first version focused on understanding how sensor measurements change across different measurement batches.
+
+### Dataset
+
+**UCI Gas Sensor Array Drift Dataset**
+
+The dataset contains:
+
+* 13,910 measurements
+* 128 derived sensor features
+* 10 measurement batches
+* 6 gas classes
+
+The raw data was parsed and converted into structured CSV files for analysis.
+
+### Data quality
+
+The processed dataset contains:
+
+* No missing values
+* No duplicate records
+* 13,910 usable measurements
+
+---
+
+## 📈 V1 Baseline Model
+
+A Logistic Regression model with StandardScaler was used as the initial classification baseline.
+
+### Random Stratified Split
 
 ```text
-Batches 1–7
+Accuracy: 98.99%
 ```
 
-and evaluated on:
+However, a random split does not properly simulate future sensor measurements.
+
+---
+
+## ⏱️ Time-Based Validation
+
+The model was trained on earlier batches and evaluated on later batches.
+
+| Batch    | Accuracy |
+| -------- | -------: |
+| Batch 8  |   91.50% |
+| Batch 9  |   74.04% |
+| Batch 10 |   72.53% |
+
+This experiment demonstrated a major difference between random validation and chronological validation.
 
 ```text
-Batches 8–10
+Random split
+98.99%
+     ↓
+Future Batch 8
+91.50%
+     ↓
+Future Batch 9
+74.04%
+     ↓
+Future Batch 10
+72.53%
 ```
 
-Results:
+This indicates significant temporal distribution shift.
 
-| Batch | Samples | Accuracy |
-| ----: | ------: | -------: |
-|     8 |     294 |   91.50% |
-|     9 |     470 |   74.04% |
-|    10 |    3600 |   72.53% |
-
-This demonstrates a substantial reduction in model performance on later unseen batches.
+Importantly, the project does **not** assume that all of this degradation is necessarily caused by physical sensor drift; future investigation is required to separate sensor effects from other distribution changes.
 
 ---
 
-# 📊 Sensor Drift Analysis
+# 🧭 V1 Drift Investigation
 
-The project also measures changes in sensor-derived features across batches while controlling for gas class.
+Measurements were compared across batches while controlling for gas class.
 
-Examples of measured batch-1 → batch-10 changes include:
+Several features showed substantial changes between early and late batches.
 
-| Feature    | Class | Percentage Change |
-| ---------- | ----: | ----------------: |
-| feature_2  |     2 |          +128.01% |
-| feature_3  |     4 |           −89.89% |
-| feature_1  |     4 |           −89.69% |
-| feature_33 |     5 |           +83.79% |
-| feature_3  |     6 |           −82.34% |
+Examples:
 
-These values indicate substantial temporal changes in sensor-derived measurements.
+| Feature    | Class |   Change |
+| ---------- | ----: | -------: |
+| feature_2  |     2 | +128.01% |
+| feature_3  |     4 |  −89.89% |
+| feature_1  |     4 |  −89.69% |
+| feature_33 |     5 |  +83.79% |
+| feature_3  |     6 |  −82.34% |
+| feature_1  |     6 |  −82.18% |
 
-> These measurements should be interpreted as evidence of distribution shift / sensor response change, not automatically as physical calibration error.
+These results motivated the move from simple drift detection toward calibration modeling.
 
 ---
 
-# 🔧 Drift Compensation Experiment
+# 🧪 V1 Compensation Experiment
 
 A feature-wise linear drift correction method was tested.
 
-Conceptually:
+The correction model estimated a trend for each feature across training batches and attempted to remove the estimated trend before classification.
+
+The result was worse than the baseline:
+
+| Batch    | Baseline | Corrected |    Change |
+| -------- | -------: | --------: | --------: |
+| Batch 8  |   91.50% |    90.48% |  −1.02 pp |
+| Batch 9  |   74.04% |    62.13% | −11.91 pp |
+| Batch 10 |   72.53% |    62.92% |  −9.61 pp |
+
+The correction method was therefore **rejected rather than forced into the system**.
+
+This is an important part of the experimental process: a proposed correction method should demonstrate measurable improvement before being considered useful.
+
+---
+
+# 🎯 V2 — CO Sensor Calibration Prototype
+
+V2 changes the problem from classification toward **continuous calibration**.
+
+Instead of predicting a gas class, the system estimates a reference CO concentration from sensor measurements.
+
+### Dataset
+
+**UCI Air Quality Dataset**
+
+The dataset contains measurements from an air-quality monitoring system in an Italian city.
+
+For V2, the relevant measurements were cleaned and transformed into a calibration dataset.
+
+### Data cleaning
+
+The dataset uses `-200` as a missing-value marker.
+
+These values were converted to missing values and rows lacking required measurements were removed.
 
 ```text
-Observed sensor response
-          ↓
-Estimate feature drift trend
-          ↓
-Remove estimated drift
-          ↓
-Train classifier
-          ↓
-Evaluate future batches
+Original rows: 9471
+
+Clean rows:    7344
 ```
 
-The result was **negative**.
+The resulting calibration dataset contains:
 
-| Batch | Baseline | Corrected |    Change |
-| ----: | -------: | --------: | --------: |
-|     8 |   91.50% |    90.48% |  −1.02 pp |
-|     9 |   74.04% |    62.13% | −11.91 pp |
-|    10 |   72.53% |    62.92% |  −9.61 pp |
-
-### Engineering Decision
-
-❌ **The tested correction method was rejected.**
-
-The correction reduced performance on future batches rather than improving it.
-
-This is an intentional experimental result rather than a failed project: the experiment demonstrates why drift-compensation methods must be evaluated against future data before deployment.
+```text
+7344 measurements
+8 input variables
+1 calibration target
+```
 
 ---
 
-# 🖥️ Streamlit Application
+# 🔧 V2 Calibration Inputs
 
-The project includes a local Streamlit dashboard designed to make the analysis understandable without reading the Python source code.
+The model uses eight measurements:
 
-The dashboard provides:
+```text
+PT08.S1(CO)
+PT08.S2(NMHC)
+PT08.S3(NOx)
+PT08.S4(NO2)
+PT08.S5(O3)
+Temperature
+Relative Humidity
+Absolute Humidity
+```
 
-### 🏠 Dashboard
+### Target
 
-* Number of measurements
-* Number of sensor features
-* Number of batches
-* Number of gas classes
-* Model performance
-* System diagnosis
+```text
+CO(GT)
+```
 
-### 📊 Sensor Drift
+The objective is:
 
-* Feature selection
-* Batch-level sensor response visualization
-* Quantitative drift measurements
-
-### 🧠 Model Performance
-
-* Future-batch accuracy
-* Batch-by-batch performance
-* Performance degradation visualization
-
-### 🔧 Compensation Experiment
-
-* Baseline vs corrected performance
-* Compensation improvement
-* Engineering decision
-
-### 🔎 Data Explorer
-
-* Batch filtering
-* Gas-class filtering
-* Raw processed measurements
+```text
+Sensor Measurements
+        ↓
+Calibration Model
+        ↓
+Estimated CO Concentration
+```
 
 ---
 
-# 🧰 Technology Stack
+# 🤖 V2 Model Experiments
 
-* **Python**
-* **Pandas**
-* **NumPy**
-* **Scikit-learn**
-* **Matplotlib**
-* **Seaborn**
-* **Streamlit**
-* **Jupyter Notebook**
-* **Git / GitHub**
+Two regression approaches were evaluated.
+
+### Linear Regression
+
+Chronological validation:
+
+```text
+MAE  = 0.3693
+RMSE = 0.5577
+R²   = 0.8311
+```
+
+### Random Forest
+
+```text
+MAE  = 0.4094
+RMSE = 0.6245
+R²   = 0.7882
+```
+
+The Linear Regression model performed better on the chronological validation set and was therefore selected as the V2 baseline calibration model.
 
 ---
 
-# 📁 Project Structure
+# 🔬 Feature Analysis
+
+Feature contribution was examined using the standardized linear model.
+
+The strongest predictive contributors included:
+
+```text
+PT08.S2(NMHC)
+PT08.S1(CO)
+PT08.S4(NO2)
+Temperature
+PT08.S3(NOx)
+```
+
+These coefficients represent **predictive contributions**, not causal physical relationships.
+
+---
+
+# 📉 Feature Reduction Experiment
+
+The model was tested using different numbers of features.
+
+| Features |    MAE |   RMSE |     R² |
+| -------- | -----: | -----: | -----: |
+| All 8    | 0.3693 | 0.5577 | 0.8311 |
+| Top 5    | 0.3753 | 0.5608 | 0.8292 |
+| Top 3    | 0.4231 | 0.6075 | 0.7996 |
+| Top 2    | 0.4504 | 0.6136 | 0.7955 |
+
+The full eight-feature model performed best, so all eight inputs are retained for V2.
+
+---
+
+# 🖥️ V2 Streamlit Application
+
+V2 includes an interactive Streamlit calibration application.
+
+The application allows a user to enter sensor measurements and receive an estimated CO concentration.
+
+### Application capabilities
+
+* Sensor measurement input
+* CO concentration prediction
+* Physical non-negative output constraint
+* Validation metrics
+* Target-range check
+* Measurement summary
+* Calibration record
+* CSV export
+
+### Application flow
+
+```text
+User enters sensor measurements
+              ↓
+        StandardScaler
+              ↓
+       Linear Regression
+              ↓
+        CO prediction
+              ↓
+     Physical validation
+              ↓
+       Calibration record
+```
+
+---
+
+# 📊 Example V2 Result
+
+Example sensor measurements can be entered through the Streamlit interface.
+
+The application produces:
+
+```text
+Estimated CO
+Validation MAE
+Validation RMSE
+Validation R²
+Reference range check
+Calibration record
+```
+
+The current model is an **experimental calibration model**, not a certified laboratory calibration system.
+
+---
+
+# 🗂️ Project Structure
 
 ```text
 lab-calibration-system/
 │
 ├── app.py
+├── app_v2.py
 ├── README.md
+├── .gitignore
 │
 ├── data/
-│   ├── raw/
-│   └── processed/
-│       └── sensor_data_with_batch.csv
-│
-├── src/
-│   ├── download_data.py
-│   ├── parse_data.py
-│   ├── analyze_data.py
-│   ├── visualize_data.py
-│   ├── analyze_drift.py
-│   ├── controlled_drift.py
-│   ├── measure_drift.py
-│   ├── drift_trend.py
-│   ├── baseline_model.py
-│   ├── time_based_baseline.py
-│   ├── batch_performance.py
-│   ├── drift_compensation.py
-│   ├── feature_drift_correction.py
-│   └── compare_models.py
+│   ├── processed/
+│   │   ├── sensor_data.csv
+│   │   └── sensor_data_with_batch.csv
+│   │
+│   └── v2/
+│       ├── air_quality_clean.csv
+│       └── co_calibration_dataset.csv
 │
 ├── models/
+│   └── v2/
+│       └── co_calibration_model.pkl
+│
+├── notebooks/
 │
 ├── results/
 │   ├── drift_measurements.csv
-│   ├── drift_trends.csv
 │   ├── batch_performance.csv
 │   ├── model_comparison.csv
-│   └── *.png
+│   ├── baseline_vs_corrected.png
+│   └── model_performance_over_time.png
 │
-└── notebooks/
+└── src/
+    ├── analyze_data.py
+    ├── analyze_drift.py
+    ├── baseline_model.py
+    ├── batch_performance.py
+    ├── controlled_drift.py
+    ├── drift_compensation.py
+    ├── feature_drift_correction.py
+    ├── measure_drift.py
+    ├── parse_data.py
+    ├── visualize_data.py
+    │
+    └── v2/
+        ├── prepare_data.py
+        ├── build_calibration_dataset.py
+        ├── baseline_calibration.py
+        ├── time_calibration_test.py
+        ├── analyze_prediction_errors.py
+        ├── random_forest_calibration.py
+        ├── feature_importance.py
+        ├── feature_reduction_test.py
+        └── train_final_model.py
 ```
 
 ---
 
-# ⚙️ Installation
+# 🛠️ Technology Stack
+
+### Programming
+
+* Python
+
+### Data Science
+
+* Pandas
+* NumPy
+* Scikit-learn
+
+### Visualization
+
+* Matplotlib
+* Seaborn
+
+### Application
+
+* Streamlit
+
+### Development
+
+* Git
+* GitHub
+* Jupyter Notebook
+
+---
+
+# ▶️ Running the Project
 
 Clone the repository:
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
-```
-
-Move into the project:
-
-```bash
+git clone https://github.com/YOUR-USERNAME/lab-calibration-system.git
 cd lab-calibration-system
 ```
 
@@ -256,7 +454,7 @@ python -m venv .venv
 
 Activate it on Windows:
 
-```bash
+```cmd
 .venv\Scripts\activate
 ```
 
@@ -266,198 +464,199 @@ Install dependencies:
 pip install pandas numpy scikit-learn matplotlib seaborn jupyter streamlit
 ```
 
----
-
-# ▶️ Running the Analysis
-
-Run the data processing pipeline:
-
-```bash
-python src/parse_data.py
-```
-
-Run drift analysis:
-
-```bash
-python src/analyze_drift.py
-```
-
-Run controlled drift analysis:
-
-```bash
-python src/controlled_drift.py
-```
-
-Measure drift:
-
-```bash
-python src/measure_drift.py
-```
-
-Run the baseline model:
-
-```bash
-python src/baseline_model.py
-```
-
-Run temporal validation:
-
-```bash
-python src/time_based_baseline.py
-```
-
-Run the compensation experiment:
-
-```bash
-python src/feature_drift_correction.py
-```
-
-Compare models:
-
-```bash
-python src/compare_models.py
-```
-
----
-
-# 🖥️ Run the Dashboard
-
-Start Streamlit:
+Run the V1 application:
 
 ```bash
 streamlit run app.py
 ```
 
-The application runs locally and provides an interactive interface for exploring the sensor data and model results.
+Run the V2 calibration application:
+
+```bash
+streamlit run app_v2.py
+```
 
 ---
 
-# 🧠 Key Learning
+# ⚠️ Current Limitations
 
-One of the most important findings from V1 is:
+This project is still an experimental research/development system.
 
-> **A very high random-split accuracy does not necessarily mean that a sensor-based machine-learning system will generalize to future sensor conditions.**
+### V1
 
-The temporal evaluation exposed a significant performance decrease.
+The UCI Gas Sensor Array Drift dataset demonstrates sensor-array drift and temporal distribution shift, but its class labels should **not** be interpreted as physical calibration reference values.
 
-The first compensation strategy also failed to recover that performance.
+### V2
 
-This creates a clear direction for V2.
+The current CO model demonstrates a data-driven calibration workflow, but it is not yet sufficient for laboratory certification or real-world instrument calibration.
 
----
+The current system does not yet provide:
 
-# 🔬 Limitations
+* Certified reference standards
+* Instrument-specific calibration procedures
+* Persistent calibration history
+* User authentication
+* Database-backed instrument management
+* Calibration scheduling
+* Model version management
+* Automated quality-control workflows
+* Hardware communication
+* Laboratory deployment
 
-This V1 project is a **sensor-drift research prototype**, not a production laboratory calibration system.
+Therefore:
 
-The current dataset provides sensor-derived measurements and gas-class labels. Those labels should not be treated as direct physical reference values for calibration regression.
-
-Therefore, V1 does not claim to produce a calibrated physical quantity such as concentration, temperature, pressure, or mass.
-
-A proper calibration system requires trustworthy reference measurements paired with sensor observations.
-
----
-
-# 🛣️ Roadmap
-
-## V1 — Sensor Drift Prototype
-
-* [x] Data acquisition
-* [x] Data parsing
-* [x] Data validation
-* [x] Drift analysis
-* [x] Controlled drift analysis
-* [x] Drift measurement
-* [x] ML baseline
-* [x] Temporal validation
-* [x] Compensation experiment
-* [x] Model comparison
-* [x] Streamlit dashboard
-
-## V2 — Calibration Software
-
-* [ ] Acquire appropriate reference-value dataset
-* [ ] Pair sensor measurements with reference measurements
-* [ ] Build calibration regression models
-* [ ] Compare calibration algorithms
-* [ ] Evaluate calibration error
-* [ ] Save trained calibration model
-* [ ] Build inference pipeline
-* [ ] Integrate calibration into Streamlit
-
-## V3 — Instrument Management
-
-* [ ] Instrument database
-* [ ] Sensor/instrument profiles
-* [ ] Calibration history
-* [ ] Model versioning
-* [ ] Calibration records
-
-## V4 — Automation
-
-* [ ] API
-* [ ] Scheduled calibration analysis
-* [ ] Automated reports
-* [ ] Drift alerts
-
-## V5 — Multi-Instrument Platform
-
-* [ ] Multiple instruments
-* [ ] Multiple sensor types
-* [ ] Centralized monitoring
-* [ ] Model management
-
-## V6 — Hardware Integration
-
-* [ ] Real sensor hardware
-* [ ] Live sensor logs
-* [ ] Real reference measurements
-* [ ] Laboratory deployment
+> **The current system is a calibration software prototype, not a certified laboratory calibration system.**
 
 ---
 
-# 📚 Dataset
+# 🧠 Engineering Principle
 
-This V1 prototype uses the **UCI Gas Sensor Array Drift Dataset** for sensor-drift analysis.
-
-Dataset source:
-
-UCI Machine Learning Repository
-
-https://archive.ics.uci.edu/dataset/224/gas+sensor+array+drift
-
-Please review the dataset's licensing and usage conditions before redistributing the dataset or using it commercially.
-
----
-
-# 📌 Project Status
-
-**Version:** V1
-
-**Status:** Prototype completed / V1 evaluation
-
-**Current focus:** Sensor drift analysis and future-batch model robustness
-
-**Next milestone:** V2 — physically grounded calibration software
-
----
-
-# 👨‍💻 Author
-**Nagesha G**
-Built as an end-to-end machine-learning and software-engineering project covering:
+The project follows an experimental approach:
 
 ```text
-Data
- ↓
-Analysis
- ↓
-Machine Learning
- ↓
-Experimentation
- ↓
-Evaluation
- ↓
-Visualization
- ↓
-Application
+Hypothesis
+    ↓
+Measurement
+    ↓
+Experiment
+    ↓
+Validation
+    ↓
+Compare
+    ↓
+Accept or Reject
 ```
+
+For example, the V1 drift-correction experiment produced worse future-batch performance.
+
+Instead of presenting the correction as successful, the method was rejected.
+
+This principle will continue throughout the project.
+
+---
+
+# 🗺️ Roadmap
+
+## V1 — Sensor Drift Analysis ✅
+
+* [x] Dataset acquisition
+* [x] Data parsing
+* [x] Data quality analysis
+* [x] Batch analysis
+* [x] Drift analysis
+* [x] Temporal validation
+* [x] Drift compensation experiment
+* [x] Streamlit dashboard
+
+## V2 — Calibration Prototype ✅
+
+* [x] Calibration dataset creation
+* [x] Missing-value handling
+* [x] Regression baseline
+* [x] Chronological validation
+* [x] Random Forest comparison
+* [x] Feature analysis
+* [x] Feature reduction experiment
+* [x] Final calibration model
+* [x] Streamlit calibration application
+
+## V3 — Instrument Management 🔜
+
+Planned capabilities:
+
+* [ ] Database
+* [ ] Instrument registration
+* [ ] Sensor/instrument IDs
+* [ ] Persistent calibration history
+* [ ] Calibration records
+* [ ] Model version tracking
+* [ ] Calibration status
+* [ ] Instrument health tracking
+
+## V4 — API + Scheduling 🔜
+
+* [ ] REST API
+* [ ] Automated calibration jobs
+* [ ] Calibration scheduling
+* [ ] Background processing
+* [ ] Alerts
+* [ ] Audit logs
+
+## V5 — Multi-Instrument Platform 🔜
+
+* [ ] Multiple instrument types
+* [ ] Multiple calibration models
+* [ ] Instrument-specific models
+* [ ] Model registry
+* [ ] Cross-instrument analysis
+
+## V6 — Hardware + Laboratory Deployment 🔜
+
+* [ ] Real sensor integration
+* [ ] Instrument communication
+* [ ] Reference standards
+* [ ] Real-time measurement ingestion
+* [ ] Hardware-in-the-loop testing
+* [ ] Laboratory validation
+
+---
+
+# 📚 Data Sources
+
+### UCI Gas Sensor Array Drift Dataset
+
+Used for V1 sensor drift and temporal distribution-shift experiments.
+
+### UCI Air Quality Dataset
+
+Used for V2 CO calibration modeling.
+
+The datasets remain subject to their respective licenses and usage conditions. The current V1 dataset should not be treated as a commercial calibration dataset.
+
+---
+
+# 🎯 Long-Term Goal
+
+The ultimate objective is to evolve this prototype into a platform capable of managing the complete lifecycle of laboratory instrument calibration:
+
+```text
+                 LAB CALIBRATION PLATFORM
+
+        ┌──────────────────────────────┐
+        │       Raw Measurements       │
+        └──────────────┬───────────────┘
+                       ↓
+        ┌──────────────────────────────┐
+        │       Data Validation        │
+        └──────────────┬───────────────┘
+                       ↓
+        ┌──────────────────────────────┐
+        │      Drift Detection         │
+        └──────────────┬───────────────┘
+                       ↓
+        ┌──────────────────────────────┐
+        │    Calibration Model         │
+        └──────────────┬───────────────┘
+                       ↓
+        ┌──────────────────────────────┐
+        │   Calibrated Measurement     │
+        └──────────────┬───────────────┘
+                       ↓
+        ┌──────────────────────────────┐
+        │    Instrument Database       │
+        └──────────────┬───────────────┘
+                       ↓
+        ┌──────────────────────────────┐
+        │ Scheduling + Automation      │
+        └──────────────────────────────┘
+```
+
+The project is being developed incrementally, with each version adding another layer toward a production-grade calibration platform.
+
+---
+
+## 👨‍💻 Author
+
+**Nagesh**
+
+Building the project from first principles — from raw sensor data to an end-to-end laboratory calibration platform.
