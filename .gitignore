@@ -35,3 +35,9 @@ data/*.zip
 # Temporary files
 *.tmp
 *.log
+data/v2/*.zip
+
+# V3 local database
+database/*.db
+database/*.sqlite
+database/*.sqlite3

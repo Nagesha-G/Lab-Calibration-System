@@ -1,15 +1,16 @@
-import os
-import pandas as pd
 import joblib
+import pandas as pd
 
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
-INPUT_FILE = "data/v2/co_calibration_dataset.csv"
-MODEL_FILE = "models/v2/co_calibration_model.pkl"
 
-features = [
+DATA_PATH = "data/v2/co_calibration_dataset.csv"
+MODEL_PATH = "models/v2/co_calibration_model.joblib"
+
+
+FEATURES = [
     "PT08.S1(CO)",
     "PT08.S2(NMHC)",
     "PT08.S3(NOx)",
@@ -20,34 +21,33 @@ features = [
     "AH"
 ]
 
-target = "CO(GT)"
+TARGET = "CO(GT)"
 
-df = pd.read_csv(INPUT_FILE)
 
-X = df[features]
-y = df[target]
+def main():
 
-model = Pipeline([
-    ("scaler", StandardScaler()),
-    ("regressor", LinearRegression())
-])
+    data = pd.read_csv(DATA_PATH)
 
-model.fit(X, y)
+    X = data[FEATURES]
+    y = data[TARGET]
 
-os.makedirs("models/v2", exist_ok=True)
+    model = Pipeline(
+        steps=[
+            ("scaler", StandardScaler()),
+            ("regressor", LinearRegression())
+        ]
+    )
 
-joblib.dump(
-    {
-        "model": model,
-        "features": features,
-        "target": target
-    },
-    MODEL_FILE
-)
+    model.fit(X, y)
 
-print("Final calibration model trained.")
-print("Training samples:", len(df))
-print("Features:", len(features))
-print("Target:", target)
-print("\nModel saved to:")
-print(MODEL_FILE)
+    joblib.dump(model, MODEL_PATH)
+
+    print("Final calibration model trained successfully.")
+    print(f"Training samples: {len(data)}")
+    print(f"Features: {len(FEATURES)}")
+    print(f"Target: {TARGET}")
+    print(f"Model saved to: {MODEL_PATH}")
+
+
+if __name__ == "__main__":
+    main()
