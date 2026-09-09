@@ -3,6 +3,32 @@ Lab Calibration System - V6
 
 Main FastAPI application entry point.
 """
+
+from src.v5.database.database import SessionLocal
+from src.v5.database.models import (
+    Instrument,
+    InstrumentConfiguration,
+    CalibrationPolicy,
+    Model,
+)
+from fastapi.responses import Response
+
+from src.v3.calibration_report import generate_calibration_report
+from src.v5.database.models import Instrument, CalibrationRecord
+from src.v5.database.database import SessionLocal
+
+
+
+from src.v5.services.configuration_service import (
+    get_instrument_configurations,
+)
+from src.v5.services.policy_service import (
+    get_instrument_policies,
+)
+from src.v5.registry.model_registry import (
+    get_approved_models,
+)
+
 from src.v6.api.calibration_history import (
     get_instrument_calibration_history,
 )
@@ -428,3 +454,390 @@ def calibration_summary(instrument_id: int):
             status_code=400,
             detail=str(exc),
         ) from exc
+
+# ============================================================
+# V5 MANAGEMENT API
+# ============================================================
+
+@app.get("/instruments")
+def get_instruments():
+    db = SessionLocal()
+
+    try:
+        instruments = (
+            db.query(Instrument)
+            .order_by(Instrument.instrument_id)
+            .all()
+        )
+
+        return {
+            "count": len(instruments),
+            "instruments": [
+                {
+                    "instrument_id": instrument.instrument_id,
+                    "name": instrument.name,
+                    "manufacturer": instrument.manufacturer,
+                    "model": instrument.model,
+                    "serial_number": instrument.serial_number,
+                    "instrument_type": instrument.instrument_type,
+                    "status": instrument.status,
+                    "created_at": (
+                        instrument.created_at.isoformat()
+                        if instrument.created_at
+                        else None
+                    ),
+                }
+                for instrument in instruments
+            ],
+        }
+
+    finally:
+        db.close()
+
+
+@app.get("/instruments/{instrument_id}")
+def get_instrument(instrument_id: int):
+    if instrument_id < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="instrument_id must be greater than 0.",
+        )
+
+    db = SessionLocal()
+
+    try:
+        instrument = (
+            db.query(Instrument)
+            .filter(
+                Instrument.instrument_id == instrument_id
+            )
+            .first()
+        )
+
+        if instrument is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Instrument not found.",
+            )
+
+        return {
+            "instrument_id": instrument.instrument_id,
+            "name": instrument.name,
+            "manufacturer": instrument.manufacturer,
+            "model": instrument.model,
+            "serial_number": instrument.serial_number,
+            "instrument_type": instrument.instrument_type,
+            "status": instrument.status,
+            "created_at": (
+                instrument.created_at.isoformat()
+                if instrument.created_at
+                else None
+            ),
+        }
+
+    finally:
+        db.close()
+
+
+@app.get("/instruments/{instrument_id}/configurations")
+def get_instrument_configurations_api(
+    instrument_id: int,
+):
+    if instrument_id < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="instrument_id must be greater than 0.",
+        )
+
+    try:
+        configurations = get_instrument_configurations(
+            instrument_id
+        )
+
+        return {
+            "instrument_id": instrument_id,
+            "count": len(configurations),
+            "configurations": [
+                {
+                    "configuration_id": configuration.configuration_id,
+                    "configuration_name": (
+                        configuration.configuration_name
+                    ),
+                    "input_schema": configuration.input_schema,
+                    "target_variable": (
+                        configuration.target_variable
+                    ),
+                    "unit": configuration.unit,
+                    "active": configuration.active,
+                    "created_at": (
+                        configuration.created_at.isoformat()
+                        if configuration.created_at
+                        else None
+                    ),
+                    "updated_at": (
+                        configuration.updated_at.isoformat()
+                        if configuration.updated_at
+                        else None
+                    ),
+                }
+                for configuration in configurations
+            ],
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@app.get("/instruments/{instrument_id}/policies")
+def get_instrument_policies_api(
+    instrument_id: int,
+):
+    if instrument_id < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="instrument_id must be greater than 0.",
+        )
+
+    try:
+        policies = get_instrument_policies(
+            instrument_id
+        )
+
+        return {
+            "instrument_id": instrument_id,
+            "count": len(policies),
+            "policies": [
+                {
+                    "policy_id": policy.policy_id,
+                    "calibration_interval_days": (
+                        policy.calibration_interval_days
+                    ),
+                    "tolerance": policy.tolerance,
+                    "reference_required": (
+                        policy.reference_required
+                    ),
+                    "active": policy.active,
+                    "created_at": (
+                        policy.created_at.isoformat()
+                        if policy.created_at
+                        else None
+                    ),
+                    "updated_at": (
+                        policy.updated_at.isoformat()
+                        if policy.updated_at
+                        else None
+                    ),
+                }
+                for policy in policies
+            ],
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@app.get("/models")
+def get_models():
+    db = SessionLocal()
+
+    try:
+        models = (
+            db.query(Model)
+            .order_by(Model.model_id)
+            .all()
+        )
+
+        return {
+            "count": len(models),
+            "models": [
+                {
+                    "model_id": model.model_id,
+                    "model_name": model.model_name,
+                    "model_version": model.model_version,
+                    "instrument_type": model.instrument_type,
+                    "target_variable": model.target_variable,
+                    "framework": model.framework,
+                    "artifact_path": model.artifact_path,
+                    "artifact_hash": model.artifact_hash,
+                    "status": model.status,
+                    "created_at": (
+                        model.created_at.isoformat()
+                        if model.created_at
+                        else None
+                    ),
+                }
+                for model in models
+            ],
+        }
+
+    finally:
+        db.close()
+
+
+@app.get("/models/approved")
+def get_approved_models_api():
+    models = get_approved_models()
+
+    return {
+        "count": len(models),
+        "models": [
+            {
+                "model_id": model.model_id,
+                "model_name": model.model_name,
+                "model_version": model.model_version,
+                "instrument_type": model.instrument_type,
+                "target_variable": model.target_variable,
+                "framework": model.framework,
+                "status": model.status,
+                "created_at": (
+                    model.created_at.isoformat()
+                    if model.created_at
+                    else None
+                ),
+            }
+            for model in models
+        ],
+    }
+
+
+
+# ============================================================
+# CALIBRATION PDF REPORT
+# ============================================================
+# ============================================================
+# CALIBRATION PDF REPORT
+# ============================================================
+
+@app.get("/instruments/{instrument_id}/calibrations/{record_id}/report")
+def download_calibration_report(
+    instrument_id: int,
+    record_id: int,
+):
+    db = SessionLocal()
+
+    try:
+        instrument = (
+            db.query(Instrument)
+            .filter(
+                Instrument.instrument_id == instrument_id
+            )
+            .first()
+        )
+
+        if instrument is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Instrument not found.",
+            )
+
+        record = (
+            db.query(CalibrationRecord)
+            .filter(
+                CalibrationRecord.record_id == record_id,
+                CalibrationRecord.instrument_id == instrument_id,
+            )
+            .first()
+        )
+
+        if record is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Calibration record not found for this instrument.",
+            )
+
+        records = (
+            db.query(CalibrationRecord)
+            .filter(
+                CalibrationRecord.instrument_id == instrument_id
+            )
+            .all()
+        )
+
+        errors = [
+            item.error
+            for item in records
+            if item.error is not None
+        ]
+
+        absolute_errors = [
+            abs(error)
+            for error in errors
+        ]
+
+        pass_count = sum(
+            1
+            for item in records
+            if item.status == "PASS"
+        )
+
+        fail_count = sum(
+            1
+            for item in records
+            if item.status == "FAIL"
+        )
+
+        count = len(records)
+
+        statistics = {
+            "count": count,
+            "pass_count": pass_count,
+            "fail_count": fail_count,
+            "pass_rate": (
+                (pass_count / count) * 100
+                if count
+                else 0
+            ),
+            "mae": (
+                sum(absolute_errors) / len(absolute_errors)
+                if absolute_errors
+                else 0
+            ),
+            "average_error": (
+                sum(errors) / len(errors)
+                if errors
+                else 0
+            ),
+            "maximum_absolute_error": (
+                max(absolute_errors)
+                if absolute_errors
+                else 0
+            ),
+        }
+
+        # V5 stores model information through the relationship.
+        # V3 report generation expects model_version directly.
+        if record.model is not None:
+            record.model_version = record.model.model_version
+        else:
+            record.model_version = "unknown"
+
+        pdf_bytes = generate_calibration_report(
+            instrument=instrument,
+            record=record,
+            statistics=statistics,
+        )
+
+        filename = (
+            f"calibration_report_"
+            f"{instrument.serial_number}_"
+            f"record_{record.record_id}.pdf"
+        )
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="{filename}"'
+                )
+            },
+        )
+
+    finally:
+        db.close()
