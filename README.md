@@ -1,63 +1,152 @@
+Absolutely. Below is a **complete replacement `README.md`** for the current state of your project.
+
+I have deliberately made it shorter and more publication-ready than the old README, while documenting the important engineering work, the reason for each stage, the current status, testing, limitations, and how to run V6.
+
+Replace the entire contents of `README.md` with this:
+
 ````markdown
 # 🔬 Lab Calibration System
 
-A software platform for analyzing sensor drift, building sensor-to-reference calibration models, and managing instrument calibration records.
+A software engineering platform for **sensor drift analysis, machine-learning calibration, instrument management, calibration history, hardware integration, and calibration reporting**.
 
-The project is developed incrementally from **sensor data analysis → machine-learning calibration → calibration management software**.
-
----
-
-## 🚀 Project Evolution
+The project was developed incrementally from data analysis into a complete software prototype:
 
 ```text
-V1
-Sensor Drift Analysis
-        ↓
-V2
-Machine Learning Calibration
-        ↓
-V3
-Calibration Management System
-        ↓
-V4
-API + Scheduling
-        ↓
-V5
-Multi-Instrument Platform
-        ↓
-V6
-Real Hardware + Laboratory Deployment
+Sensor Data
+    ↓
+V1 — Sensor Drift Analysis
+    ↓
+V2 — Machine Learning Calibration
+    ↓
+V3 — Calibration Management
+    ↓
+V4 — API + Scheduling
+    ↓
+V5 — Multi-Instrument Platform
+    ↓
+V6 — Hardware Integration Architecture
+    ↓
+Calibration History + PDF Reports
 ````
+
+The current system is a **software prototype / engineering research platform**.
+
+It is **not a certified laboratory calibration system** and has not been physically validated against laboratory instruments or certified reference standards.
 
 ---
 
-# 📌 Project Overview
+# 🎯 What Is This Project About?
 
-Modern laboratory and industrial instruments can experience measurement changes over time because of sensor aging, environmental conditions, operating conditions, and other sources of distribution shift.
+Laboratory and industrial measurement systems can change over time because of:
 
-The goal of this project is to build a software system that can:
+* Sensor aging
+* Environmental conditions
+* Operating conditions
+* Measurement noise
+* Sensor drift
+* Distribution shift
+* Instrument-specific behavior
 
-* Analyze sensor behavior over time
-* Detect temporal distribution changes
-* Build machine-learning calibration models
-* Compare estimated measurements against reference values
-* Determine calibration PASS/FAIL status
-* Maintain instrument records
-* Store calibration history
-* Generate calibration reports
-* Provide a foundation for future automated calibration workflows
+A calibration system therefore needs more than a machine-learning model.
 
-The project currently contains three completed versions.
+It needs a complete workflow:
+
+```text
+Measurement
+    ↓
+Validation
+    ↓
+Calibration Model
+    ↓
+Estimated Value
+    ↓
+Reference Value
+    ↓
+Error Calculation
+    ↓
+Tolerance Check
+    ↓
+PASS / FAIL
+    ↓
+Persistent Record
+    ↓
+Report
+```
+
+This project explores how such a system can be constructed progressively using open datasets, machine learning, databases, APIs, software abstractions, simulated hardware, and reporting.
+
+---
+
+# 🚀 Current Project Status
+
+## Software Development: ✅ Complete for the current prototype milestone
+
+| Version         | Purpose                           | Status       |
+| --------------- | --------------------------------- | ------------ |
+| V1              | Sensor Drift Analysis             | ✅ Complete   |
+| V2              | Machine Learning Calibration      | ✅ Complete   |
+| V3              | Calibration Management            | ✅ Complete   |
+| V4              | API + Scheduling                  | ✅ Complete   |
+| V5              | Multi-Instrument Platform         | ✅ Complete   |
+| V6              | Hardware Integration Architecture | ✅ Complete   |
+| PDF Reports     | Calibration Reporting             | ✅ Complete   |
+| Automated Tests | Full project validation           | ✅ 310 passed |
+
+Current validation:
+
+```text
+310 passed
+2 warnings
+```
+
+The two warnings are dependency deprecation warnings from the current FastAPI/Starlette test stack and are not test failures.
+
+---
+
+# 🧠 Engineering Approach
+
+The project follows a progressive engineering approach:
+
+```text
+Observe
+   ↓
+Measure
+   ↓
+Model
+   ↓
+Validate
+   ↓
+Integrate
+   ↓
+Persist
+   ↓
+Report
+   ↓
+Automate
+```
+
+The goal was not simply to train a model.
+
+Each version adds another layer required to turn an experiment into a software system.
 
 ---
 
 # 🧪 V1 — Sensor Drift Analysis
 
-## Objective
+## Why V1?
 
-V1 investigates whether sensor measurements change across different data batches and whether a model trained on earlier measurements continues to perform well on later measurements.
+Before building a calibration system, we first need to understand whether sensor measurements and model performance change over time.
 
-The purpose of V1 is **sensor drift analysis and temporal robustness**, not physical calibration.
+V1 therefore focuses on:
+
+* Sensor behavior
+* Batch differences
+* Temporal distribution shift
+* Future-batch model performance
+* Drift analysis
+* Drift compensation experiments
+
+V1 is **not physical calibration**.
 
 ---
 
@@ -67,102 +156,53 @@ V1 uses the:
 
 **UCI Gas Sensor Array Drift Dataset**
 
-The dataset contains:
-
-* 13,910 measurements
-* 128 sensor-derived features
-* 10 batches
-* 6 gas classes
-
-The raw dataset contains measurements represented using feature-value pairs.
-
-The dataset uses 16 chemical sensors with 128 derived features.
-
----
-
-## V1 Data Processing
-
-The raw `.dat` files were parsed into a structured CSV dataset.
-
-Output:
-
-```text
-data/processed/sensor_data.csv
-```
-
-and:
-
-```text
-data/processed/sensor_data_with_batch.csv
-```
-
 The processed dataset contains:
 
 ```text
-13,910 rows
-128 features
-1 class label
-1 batch identifier
+13,910 measurements
+128 sensor-derived features
+10 batches
+6 gas classes
+```
+
+The raw data was parsed into structured CSV files.
+
+Main outputs:
+
+```text
+data/processed/sensor_data.csv
+data/processed/sensor_data_with_batch.csv
 ```
 
 ---
 
-# 📊 V1 Drift Analysis
+# 📊 V1 Results
 
-The project compares sensor behavior across batches.
-
-Example measured changes between Batch 1 and Batch 10 include:
-
-| Feature    | Class |   Change |
-| ---------- | ----: | -------: |
-| feature_2  |     2 | +128.01% |
-| feature_3  |     4 |  −89.89% |
-| feature_1  |     4 |  −89.69% |
-| feature_33 |     5 |  +83.79% |
-| feature_3  |     6 |  −82.34% |
-| feature_1  |     6 |  −82.18% |
-
-These results demonstrate substantial changes in feature distributions across time.
-
-However, these changes should not automatically be interpreted as purely physical sensor drift because temporal distribution shift can have multiple causes.
-
----
-
-# 🤖 V1 Baseline Model
-
-A Logistic Regression model was trained using:
+A Logistic Regression pipeline was used:
 
 ```text
 StandardScaler
-+
+      +
 LogisticRegression
 ```
 
-using all 128 features.
-
-### Random Stratified Split
-
-Accuracy:
+Using a random stratified split:
 
 ```text
-98.99%
+Accuracy = 98.99%
 ```
 
-This result demonstrates strong performance when training and testing data are randomly sampled from the overall dataset.
+However, random validation does not represent deployment on future batches very well.
 
-However, this validation method does not adequately simulate deployment on future batches.
+A chronological validation was therefore performed.
 
----
-
-# ⏱️ V1 Time-Based Validation
-
-The model was trained using:
+Training:
 
 ```text
 Batches 1–7
 ```
 
-and evaluated on future batches:
+Testing:
 
 ```text
 Batch 8
@@ -172,79 +212,81 @@ Batch 10
 
 Results:
 
-| Batch    | Samples | Accuracy |
-| -------- | ------: | -------: |
-| Batch 8  |     294 |   91.50% |
-| Batch 9  |     470 |   74.04% |
-| Batch 10 |   3,600 |   72.53% |
+| Batch    | Accuracy |
+| -------- | -------: |
+| Batch 8  |   91.50% |
+| Batch 9  |   74.04% |
+| Batch 10 |   72.53% |
 
-This is one of the key findings of V1.
-
-A random split produced:
+The important finding was:
 
 ```text
+Random split
 98.99%
-```
 
-while future-batch performance dropped to:
+        ↓
 
-```text
+Future Batch 10
 72.53%
 ```
 
-This demonstrates that random validation can substantially overestimate performance when the deployment environment contains temporal distribution shift.
+This demonstrates that random train/test validation can substantially overestimate performance when temporal distribution shift exists.
 
 ---
 
-# 🧮 V1 Drift Compensation Experiment
+# 🧮 V1 Drift Compensation
 
-Several normalization and drift-correction experiments were performed.
-
-A feature-wise linear drift correction model was tested by estimating feature trends across training batches and removing the predicted trend.
+A feature-wise linear drift correction experiment was performed.
 
 The correction was rejected because it reduced future-batch performance.
 
-Example:
-
 | Batch    | Baseline | Corrected |    Change |
 | -------- | -------: | --------: | --------: |
-| Batch 8  |   91.50% |    90.48% |  −1.02 pp |
-| Batch 9  |   74.04% |    62.13% | −11.91 pp |
-| Batch 10 |   72.53% |    62.92% |  −9.61 pp |
+| Batch 8  |   91.50% |    90.48% |  -1.02 pp |
+| Batch 9  |   74.04% |    62.13% | -11.91 pp |
+| Batch 10 |   72.53% |    62.92% |  -9.61 pp |
 
-The important engineering decision was to **reject the correction rather than force an improvement**.
+The engineering decision was:
 
----
-
-# 🖥️ V1 Streamlit Dashboard
-
-V1 includes a Streamlit dashboard with:
-
-* 📊 Dashboard
-* 📈 Sensor Drift
-* 🤖 Model Performance
-* 🧮 Compensation Experiment
-* 🔎 Data Explorer
-
-The dashboard provides visual access to the drift analysis and model performance results.
+> **Do not force a correction that does not improve future performance.**
 
 ---
 
-# 🧪 V2 — Machine Learning Calibration
+# 🖥️ V1 Application
 
-## Objective
+V1 includes a Streamlit dashboard containing:
 
-V2 moves from classification/drift analysis toward an actual calibration problem.
+* Dashboard
+* Sensor Drift
+* Model Performance
+* Compensation Experiment
+* Data Explorer
 
-Instead of predicting a gas class, the model predicts a physical measurement from sensor readings.
+---
 
-The target selected for V2 is:
+# 🤖 V2 — Machine Learning Calibration
+
+## Why V2?
+
+V1 studied sensor drift and classification.
+
+V2 moves toward an actual calibration problem:
+
+```text
+Sensor Measurements
+        ↓
+Machine Learning Model
+        ↓
+Estimated Physical Measurement
+```
+
+The target selected was:
 
 ```text
 CO(GT)
 ```
 
-where the dataset provides a reference CO measurement.
+The dataset provides a reference CO measurement, allowing sensor measurements to be compared against a reference value.
 
 ---
 
@@ -254,56 +296,40 @@ V2 uses the:
 
 **UCI Air Quality Dataset**
 
-The raw dataset contains:
+Original dataset:
 
 ```text
 9,471 rows
 17 columns
 ```
 
-The UCI dataset uses:
+The dataset uses:
 
 ```text
 -200
 ```
 
-as a missing-value sentinel.
+as its missing-value sentinel.
 
-These values were converted to missing values and removed from the required calibration dataset.
-
----
-
-# 🧹 V2 Data Cleaning
-
-Original dataset:
-
-```text
-9,471 rows
-```
-
-After removing rows with missing required measurements:
-
-```text
-7,344 rows
-```
-
-The final calibration dataset contains:
+After cleaning the required measurements:
 
 ```text
 7,344 measurements
 ```
 
----
+were retained for the calibration dataset.
 
-# 🎯 V2 Calibration Target
-
-Target:
+Main dataset:
 
 ```text
-CO(GT)
+data/v2/co_calibration_dataset.csv
 ```
 
-Input features:
+---
+
+# 🎯 V2 Model Inputs
+
+The calibration model uses eight inputs:
 
 ```text
 PT08.S1(CO)
@@ -316,37 +342,29 @@ RH
 AH
 ```
 
-Therefore:
+Workflow:
 
 ```text
-8 input features
-        ↓
-Machine Learning Model
-        ↓
-Estimated CO concentration
+8 Sensor / Environmental Inputs
+            ↓
+      Calibration Model
+            ↓
+       Estimated CO
 ```
 
 ---
 
 # 📈 V2 Calibration Model
 
-The primary V2 model uses:
+The primary model uses:
 
 ```text
 StandardScaler
-+
+      +
 LinearRegression
 ```
 
-The model is trained using chronological data rather than a random split.
-
-This better represents a real deployment scenario where the model is trained on earlier observations and used on later observations.
-
----
-
-# 📊 V2 Model Performance
-
-Using a chronological 75/25 split:
+A chronological 75/25 split was used.
 
 ```text
 Training samples: 5,508
@@ -361,115 +379,71 @@ Results:
 | RMSE   | 0.5577 |
 | R²     | 0.8311 |
 
-These metrics describe regression performance.
+Important:
 
-**R² = 0.8311 should not be interpreted as 83.11% calibration accuracy.**
+> **R² = 0.8311 is not 83.11% calibration accuracy.**
+
+These are regression performance metrics.
 
 ---
 
-# 🌲 Random Forest Experiment
+# 🌲 Model Comparison
 
-A Random Forest regression model was also evaluated.
-
-Results:
+A Random Forest regression model was also tested.
 
 | Model             |    MAE |   RMSE |     R² |
 | ----------------- | -----: | -----: | -----: |
 | Linear Regression | 0.3693 | 0.5577 | 0.8311 |
 | Random Forest     | 0.4094 | 0.6245 | 0.7882 |
 
-The Random Forest model performed worse on the selected chronological validation split.
+The Linear Regression pipeline performed better on the selected chronological validation split and was therefore retained.
 
-Therefore, the Linear Regression pipeline was retained as the V2 model.
-
----
-
-# 🔬 V2 Feature Analysis
-
-Feature importance was examined using the coefficients of the standardized linear model.
-
-The largest predictive contributions were:
-
-| Feature       | Coefficient |
-| ------------- | ----------: |
-| PT08.S2(NMHC) |   +1.352226 |
-| PT08.S1(CO)   |   +0.409305 |
-| PT08.S4(NO2)  |   −0.199773 |
-| T             |   −0.186121 |
-| PT08.S3(NOx)  |   +0.182130 |
-| AH            |   +0.059159 |
-| PT08.S5(O3)   |   −0.047925 |
-| RH            |   −0.000615 |
-
-These coefficients are predictive relationships within the trained model and should not be interpreted as causal relationships.
-
----
-
-# 🧪 V2 Feature Reduction Experiment
-
-Different feature subsets were evaluated.
-
-| Features |    MAE |   RMSE |     R² |
-| -------- | -----: | -----: | -----: |
-| All 8    | 0.3693 | 0.5577 | 0.8311 |
-| Top 5    | 0.3753 | 0.5608 | 0.8292 |
-| Top 3    | 0.4231 | 0.6075 | 0.7996 |
-| Top 2    | 0.4504 | 0.6136 | 0.7955 |
-
-The full eight-feature model was retained.
-
----
-
-# 💾 V2 Model
-
-The final model is stored as:
+Final model:
 
 ```text
 models/v2/co_calibration_model.joblib
 ```
 
-The original V2 `.pkl` model is also retained for compatibility with the earlier V2 application.
+The older `.pkl` model is retained for compatibility with the earlier V2 application.
 
 ---
 
-# 🖥️ V2 Streamlit Application
+# 🖥️ V2 Application
 
-V2 provides a calibration interface where users enter sensor measurements and receive an estimated CO value.
+The V2 Streamlit application provides:
 
-The application provides:
-
-* Sensor input fields
+* Sensor input
 * CO prediction
-* Raw model prediction
-* Non-negative post-processing constraint
-* Validation metrics
+* Model validation metrics
 * Target range information
-* Calibration record display
-* CSV download
+* Calibration result
+* CSV export
 
-Example workflow:
+The application also applies a non-negative output constraint.
 
-```text
-Sensor Measurements
-        ↓
-V2 Calibration Model
-        ↓
-Estimated CO
-        ↓
-Display Result
-```
-
-The non-negative output constraint is a post-processing rule and does not by itself prove physical calibration validity.
+This constraint is a post-processing rule and **does not prove physical calibration validity**.
 
 ---
 
 # 🏭 V3 — Calibration Management System
 
-## Objective
+## Why V3?
 
-V3 transforms the V2 prediction model into a small calibration management platform.
+A machine-learning model alone is not a calibration management system.
 
-The system introduces persistent instrument and calibration records.
+V3 adds persistent software infrastructure around the model.
+
+Main capabilities:
+
+* Instrument management
+* Calibration records
+* Reference values
+* Tolerance
+* PASS/FAIL determination
+* Calibration history
+* Statistics
+* Calibration trends
+* PDF reports
 
 ---
 
@@ -483,27 +457,21 @@ SQLite
 SQLAlchemy
 ```
 
-Database location:
+Database:
 
 ```text
 database/calibration.db
 ```
 
-The local database is intentionally excluded from Git because it contains local runtime/test records.
-
-The database schema is defined in:
-
-```text
-src/v3/models.py
-```
+The database is a local runtime database and is excluded from Git.
 
 ---
 
-# 🔧 V3 Instrument Management
+# 🔧 Instrument Management
 
 The system supports multiple instruments.
 
-Each instrument contains:
+Instrument information includes:
 
 ```text
 Instrument ID
@@ -530,43 +498,47 @@ Serial numbers are protected against duplicates.
 
 ---
 
-# 🧪 V3 Calibration Workflow
+# 🧪 Calibration Workflow
 
-The V3 calibration workflow is:
+The V3/V5/V6 calibration workflow is:
 
 ```text
 Select Instrument
        ↓
-Enter Sensor Measurements
+Acquire / Enter Measurement
        ↓
-V2 ML Model
+Calibration Model
        ↓
-Estimated CO
+Estimated Value
        ↓
-Enter Reference CO
+Reference Value
        ↓
 Calculate Error
        ↓
-Compare Against Tolerance
+Compare With Tolerance
        ↓
 PASS / FAIL
        ↓
 Save Calibration Record
 ```
 
-The error is calculated as:
+Error:
 
 ```text
-Error = Estimated Value − Reference Value
+Error = Estimated Value - Reference Value
 ```
 
-The absolute error is compared with the configured tolerance.
+Decision:
 
 ```text
 Absolute Error ≤ Tolerance
         ↓
       PASS
+```
 
+or:
+
+```text
 Absolute Error > Tolerance
         ↓
       FAIL
@@ -574,53 +546,37 @@ Absolute Error > Tolerance
 
 ---
 
-# 📋 V3 Calibration Records
+# 📋 Calibration Records
 
-Each calibration record stores:
+Calibration records contain information such as:
 
 ```text
 Record ID
 Instrument ID
-Measurement Time
-Model Version
+Model
+Measurement
 Estimated Value
 Reference Value
 Error
+Absolute Error
 Tolerance
 Status
-Created At
+Timestamp
 ```
 
-This provides an audit trail for calibration activity.
+This provides a persistent audit trail for calibration activity.
 
 ---
 
-# 📊 V3 Dashboard
+# 📄 Calibration PDF Reports
 
-The V3 dashboard provides:
-
-* Total calibrations
-* PASS count
-* FAIL count
-* Pass rate
-* Latest calibration status
-* Calibration trends
-* Calibration history
-* Instrument information
-
-The system supports instrument-specific history so that records belonging to one instrument do not appear under another instrument.
-
----
-
-# 📄 V3 Calibration Reports
-
-V3 generates PDF calibration reports using:
+Calibration reports are generated using:
 
 ```text
 ReportLab
 ```
 
-The report includes:
+Reports contain:
 
 ### Report Information
 
@@ -640,8 +596,8 @@ The report includes:
 
 ### Calibration Result
 
-* Estimated CO
-* Reference CO
+* Estimated value
+* Reference value
 * Error
 * Tolerance
 * PASS/FAIL status
@@ -656,70 +612,479 @@ The report includes:
 * Average error
 * Maximum absolute error
 
-The report can be downloaded directly from the Streamlit application.
-
-Both PASS and FAIL report generation have been tested.
+The V6 Streamlit History page allows a calibration record to be selected and its PDF report downloaded.
 
 ---
 
-# 🧪 V3 Validation and Testing
+# 🌐 V4 — API + Scheduling
 
-The V3 system was tested for:
+## Why V4?
 
-* Database persistence
-* Instrument creation
-* Instrument editing
-* Instrument activation/deactivation
-* Duplicate serial protection
-* Multi-instrument isolation
-* Calibration record creation
-* PASS calculation
-* FAIL calculation
-* Tolerance handling
-* Zero-tolerance boundary
-* Invalid reference values
-* Invalid estimated values
-* Invalid tolerance values
-* Application restart persistence
-* Calibration history
-* PASS PDF reports
-* FAIL PDF reports
+The system should not depend only on a Streamlit user interface.
 
-The database and application were verified after restarting the Streamlit application.
+V4 introduces an API layer so that other applications and future hardware systems can communicate with the calibration platform programmatically.
 
----
-
-# 🏗️ Architecture
-
-The current system can be represented as:
+Technology:
 
 ```text
-                         LAB CALIBRATION SYSTEM
-                                  │
-             ┌────────────────────┼────────────────────┐
-             │                    │                    │
-            V1                   V2                   V3
-             │                    │                    │
-      Drift Analysis       ML Calibration       Management System
-             │                    │                    │
-      Batch Analysis        CO Prediction        Instruments
-             │                    │                    │
-      Temporal Testing     Reference CO          Calibration Records
-             │                    │                    │
-      Model Robustness      Regression            PASS / FAIL
-                                  │                    │
-                                  └────────┬───────────┘
-                                           │
-                                      SQLite DB
-                                           │
-                              ┌────────────┴────────────┐
-                              │                         │
-                           Dashboard               PDF Reports
+FastAPI
++
+REST API
++
+Scheduling
+```
+
+The API provides functionality around:
+
+* Calibration
+* Instruments
+* Calibration history
+* Calibration statistics
+* Scheduling
+* System status
+
+---
+
+# 🏗️ V5 — Multi-Instrument Platform
+
+## Why V5?
+
+The system needed to move beyond a single calibration workflow.
+
+V5 introduces a more general platform architecture.
+
+Core entities include:
+
+```text
+Instrument
+Instrument Configuration
+Calibration Policy
+Model
+Measurement
+Calibration Record
+Audit Log
+User
+```
+
+The architecture separates:
+
+```text
+Instrument
+     ↓
+Configuration
+     ↓
+Measurement
+     ↓
+Model Registry
+     ↓
+Calibration Engine
+     ↓
+Calibration Record
+     ↓
+Audit / Reporting
 ```
 
 ---
 
-# 📁 Project Structure
+# 🧠 V5 Calibration Engine
+
+The calibration engine performs deterministic validation around the machine-learning model.
+
+The workflow validates:
+
+* Instrument
+* Measurement
+* Configuration
+* Approved model
+* Calibration policy
+* Reference value
+* Model target
+* Measurement fields
+
+The model produces the estimate.
+
+The calibration engine determines the final tolerance-based result.
+
+This separation is important:
+
+> **The ML model estimates the measurement; the calibration engine determines the calibration result according to explicit rules.**
+
+---
+
+# 🔐 V5 Model Registry
+
+The model registry supports:
+
+* Model registration
+* Model versioning
+* Artifact paths
+* SHA-256 artifact hashing
+* Approval status
+* Approved-model retrieval
+
+This provides a foundation for controlled model deployment.
+
+---
+
+# 🧰 V6 — Hardware Integration Architecture
+
+## Why V6?
+
+The previous versions operated primarily on stored or user-entered measurements.
+
+A real calibration platform eventually needs to communicate with instruments.
+
+V6 therefore introduces a hardware abstraction layer.
+
+The important design principle is:
+
+> **Hardware-specific communication should be separated from calibration logic.**
+
+---
+
+# 🔌 Supported Hardware Interfaces
+
+V6 provides driver architecture for:
+
+```text
+Simulated Instrument
+Serial
+USB
+TCP
+```
+
+A common instrument interface exposes operations such as:
+
+```text
+connect()
+disconnect()
+is_connected()
+read_measurement()
+```
+
+This allows the calibration software to work with different transport mechanisms without rewriting the calibration engine.
+
+---
+
+# 🧪 Simulated Hardware
+
+A simulated instrument was implemented for development and testing.
+
+It produces measurement data using the same general field structure expected by the calibration model.
+
+This allows the complete workflow to be tested without purchasing physical laboratory hardware.
+
+Example:
+
+```text
+Simulated Instrument
+        ↓
+Measurement Acquisition
+        ↓
+Validation
+        ↓
+Calibration
+        ↓
+PASS / FAIL
+        ↓
+Database
+```
+
+---
+
+# 🔌 Serial / USB / TCP Architecture
+
+V6 includes transport-level abstractions for:
+
+### Serial
+
+```text
+COM Port
+    ↓
+Serial Driver
+    ↓
+Measurement Protocol
+```
+
+### USB
+
+```text
+USB Device
+    ↓
+USB Driver
+    ↓
+Measurement Protocol
+```
+
+### TCP
+
+```text
+TCP Endpoint
+    ↓
+TCP Driver
+    ↓
+Measurement Protocol
+```
+
+The drivers are designed so that actual instrument-specific protocols can be added later.
+
+---
+
+# 🧾 Measurement Validation
+
+V6 validates incoming measurements before they enter the calibration workflow.
+
+Validation includes:
+
+* Required fields
+* Numeric values
+* Measurement structure
+* Profile-specific ranges
+* Transport/protocol validation
+
+This prevents malformed measurements from silently entering the calibration pipeline.
+
+---
+
+# 🧪 Reference Standard Architecture
+
+V6 also introduces an abstraction for a reference standard.
+
+The architecture supports:
+
+```text
+Instrument
+     +
+Reference Standard
+     ↓
+Calibration Pair
+     ↓
+Calibration Engine
+```
+
+A simulated reference standard is currently used for software testing.
+
+A real certified reference instrument would be required for physical laboratory validation.
+
+---
+
+# 🛡️ Hardware Safety and Fault Handling
+
+V6 includes:
+
+* Safety manager
+* Connection manager
+* Connection recovery
+* Fault injection
+* Acquisition error handling
+* Continuous acquisition
+* Hardware session lifecycle
+* Session state management
+
+The purpose is to test what happens when hardware communication fails rather than assuming every measurement succeeds.
+
+---
+
+# 🔄 Continuous Calibration
+
+The system supports orchestrated calibration cycles.
+
+Conceptually:
+
+```text
+Connect
+   ↓
+Acquire
+   ↓
+Validate
+   ↓
+Calibrate
+   ↓
+Store
+   ↓
+Repeat
+```
+
+The orchestration layer allows multiple cycles to be executed and stopped safely.
+
+---
+
+# 🌐 V6 FastAPI
+
+V6 provides a hardware-oriented API.
+
+Major functionality includes:
+
+```text
+Health
+Drivers
+Hardware Sessions
+Session Start
+Calibration
+Continuous Runs
+Session Stop
+Calibration History
+Calibration Summary
+Instruments
+Configurations
+Policies
+Models
+Approved Models
+PDF Reports
+```
+
+API documentation is available through FastAPI Swagger when the server is running.
+
+---
+
+# 🖥️ V6 Streamlit Application
+
+The unified V6 application provides:
+
+```text
+Dashboard
+Instruments
+Calibration
+History
+Summary
+Analytics
+Models
+Hardware
+```
+
+The History page provides:
+
+* Instrument selection
+* Calibration history
+* Record selection
+* PDF report generation
+* PDF download
+
+The Analytics section provides access to the earlier V1/V2 analysis results.
+
+---
+
+# 📊 Analytics
+
+The V6 application brings earlier analytical results into the unified platform.
+
+Analytics include:
+
+### Sensor Drift
+
+* Batch behavior
+* Feature drift
+* Drift measurements
+* Drift trends
+
+### Model Performance
+
+* Future-batch performance
+* Model comparison
+* Temporal performance
+
+### Compensation
+
+* Baseline vs corrected performance
+* Correction experiment results
+
+This connects the experimental work from V1/V2 with the later software platform.
+
+---
+
+# 🧪 Testing
+
+The project currently contains automated tests across the major software layers.
+
+Current result:
+
+```text
+310 passed
+2 warnings
+```
+
+Testing covers areas including:
+
+* Data processing
+* Calibration logic
+* Database behavior
+* Instrument management
+* Configuration
+* Policies
+* Model registry
+* Measurements
+* API
+* Hardware drivers
+* Hardware sessions
+* Fault handling
+* Reference calibration
+* Orchestration
+* PDF reporting
+* Multi-instrument behavior
+
+The project is therefore validated as a software prototype.
+
+---
+
+# 🏗️ High-Level Architecture
+
+```text
+                         LAB CALIBRATION SYSTEM
+                                  │
+        ┌─────────────────────────┼─────────────────────────┐
+        │                         │                         │
+       V1                        V2                        V3
+        │                         │                         │
+ Sensor Drift              ML Calibration          Calibration Mgmt
+        │                         │                         │
+ Temporal Analysis          CO Prediction          Instruments
+        │                         │                         │
+ Future Validation          Reference Value        Calibration Records
+        │                         │                         │
+        └─────────────────────────┼─────────────────────────┘
+                                  │
+                                 V4
+                                  │
+                              FastAPI
+                                  │
+                                 V5
+                                  │
+                       Multi-Instrument Platform
+                                  │
+                 ┌────────────────┼────────────────┐
+                 │                │                │
+              Models        Measurements       Policies
+                 │                │                │
+                 └────────────────┼────────────────┘
+                                  │
+                            Calibration Engine
+                                  │
+                                 V6
+                                  │
+                       Hardware Integration Layer
+                                  │
+              ┌───────────────────┼───────────────────┐
+              │                   │                   │
+           Serial                 USB                TCP
+              │                   │                   │
+              └───────────────────┼───────────────────┘
+                                  │
+                         Reference Standard
+                                  │
+                            Calibration Result
+                                  │
+                       ┌──────────┴──────────┐
+                       │                     │
+                    Database              Reports
+                       │                     │
+                    History                PDF
+                       │
+                    Dashboard
+```
+
+---
+
+# 📁 Important Project Structure
 
 ```text
 Lab-Calibration-System/
@@ -727,7 +1092,9 @@ Lab-Calibration-System/
 ├── app.py
 ├── app_v2.py
 ├── app_v3.py
+├── app_v6.py
 ├── README.md
+├── requirements.txt
 ├── .gitignore
 │
 ├── data/
@@ -736,69 +1103,50 @@ Lab-Calibration-System/
 │   │   └── sensor_data_with_batch.csv
 │   │
 │   └── v2/
-│       ├── AirQualityUCI.csv
-│       ├── AirQualityUCI.xlsx
 │       └── co_calibration_dataset.csv
 │
 ├── models/
 │   └── v2/
-│       ├── co_calibration_model.pkl
-│       └── co_calibration_model.joblib
+│       ├── co_calibration_model.joblib
+│       └── co_calibration_model.pkl
 │
 ├── results/
 │   ├── drift_measurements.csv
+│   ├── drift_trends.csv
 │   ├── batch_performance.csv
 │   ├── model_comparison.csv
 │   ├── baseline_vs_corrected.png
 │   ├── model_performance_over_time.png
-│   │
 │   └── v2/
-│       └── actual_vs_predicted_co.png
 │
 ├── src/
-│   ├── download_data.py
-│   ├── parse_data.py
-│   ├── analyze_data.py
-│   ├── visualize_data.py
-│   ├── analyze_drift.py
-│   ├── controlled_drift.py
-│   ├── measure_drift.py
-│   ├── drift_trend.py
-│   ├── baseline_model.py
-│   ├── time_based_baseline.py
-│   ├── batch_performance.py
-│   ├── drift_compensation.py
-│   ├── feature_drift_correction.py
-│   ├── compare_models.py
-│   ├── plot_performance.py
+│   ├── V1 analysis modules
 │   │
 │   ├── v2/
-│   │   ├── prepare_data.py
-│   │   ├── build_calibration_dataset.py
-│   │   ├── baseline_calibration.py
-│   │   ├── time_calibration_test.py
-│   │   ├── analyze_prediction_errors.py
-│   │   ├── random_forest_calibration.py
-│   │   └── train_final_model.py
+│   │   └── calibration modules
 │   │
-│   └── v3/
-│       ├── database.py
-│       ├── models.py
-│       ├── init_database.py
-│       ├── calibration_service.py
-│       ├── calibration_report.py
-│       ├── list_instruments.py
-│       ├── list_calibrations.py
-│       ├── test_instrument.py
-│       ├── test_calibration.py
-│       ├── test_calibration_service.py
-│       └── test_validation.py
+│   ├── v3/
+│   │   ├── database.py
+│   │   ├── models.py
+│   │   ├── calibration_service.py
+│   │   └── calibration_report.py
+│   │
+│   └── v6/
+│       ├── api/
+│       ├── hardware/
+│       ├── services/
+│       ├── config.py
+│       └── logging_config.py
+│
+├── tests/
+│   ├── V3 tests
+│   ├── V4 tests
+│   ├── V5 tests
+│   └── v6/
 │
 └── database/
     └── calibration.db
 ```
-
-> `database/calibration.db` is a local runtime database and is excluded from Git.
 
 ---
 
@@ -806,11 +1154,11 @@ Lab-Calibration-System/
 
 ## 1. Clone the repository
 
-```bash
+```cmd
 git clone https://github.com/Nagesha-G/Lab-Calibration-System.git
 ```
 
-```bash
+```cmd
 cd Lab-Calibration-System
 ```
 
@@ -835,294 +1183,66 @@ Activate:
 ## 3. Install dependencies
 
 ```cmd
-pip install pandas numpy scikit-learn matplotlib seaborn jupyter ucimlrepo sqlalchemy streamlit reportlab joblib
+pip install -r requirements.txt
 ```
 
----
-
-# ▶️ Running the Applications
-
-## V1
+If a requirements file is not available in a fresh checkout, install the core dependencies:
 
 ```cmd
-streamlit run app.py
+pip install pandas numpy scikit-learn matplotlib seaborn sqlalchemy streamlit reportlab joblib fastapi uvicorn pyserial pyserial-asyncio httpx pytest
 ```
 
 ---
 
-## V2
+# ▶️ Running V6
 
-```cmd
-streamlit run app_v2.py
-```
-
----
-
-## V3
-
-```cmd
-streamlit run app_v3.py
-```
-
----
-
-# 🗄️ Initializing the V3 Database
+## Start the FastAPI server
 
 From the project root:
 
 ```cmd
-python -m src.v3.init_database
+uvicorn src.v6.api.main:app --reload
 ```
 
-Expected output:
+API:
 
 ```text
-Database initialized successfully.
-Instrument table created.
+http://127.0.0.1:8000
+```
+
+Swagger documentation:
+
+```text
+http://127.0.0.1:8000/docs
 ```
 
 ---
 
-# 🔎 Listing Instruments
+## Start the Streamlit application
+
+Open another terminal:
 
 ```cmd
-python -m src.v3.list_instruments
+streamlit run app_v6.py
 ```
+
+The V6 application provides the unified project interface.
 
 ---
 
-# 📋 Listing Calibration Records
+# 🧪 Run Tests
+
+From the project root:
 
 ```cmd
-python -m src.v3.list_calibrations
+pytest -q
 ```
 
----
-
-# 🧪 Running V3 Validation Tests
-
-```cmd
-python -m src.v3.test_validation
-```
-
-Additional V3 test scripts are available under:
+Expected current result:
 
 ```text
-src/v3/
-```
-
----
-
-# 🔬 Technologies Used
-
-## Programming
-
-* Python
-
-## Data Science
-
-* Pandas
-* NumPy
-* Scikit-learn
-
-## Visualization
-
-* Matplotlib
-* Seaborn
-
-## Machine Learning
-
-* Linear Regression
-* Logistic Regression
-* Random Forest
-* StandardScaler
-* Scikit-learn Pipeline
-
-## Application
-
-* Streamlit
-
-## Database
-
-* SQLite
-* SQLAlchemy
-
-## Reporting
-
-* ReportLab
-
-## Development
-
-* Git
-* GitHub
-* Jupyter Notebook
-
----
-
-# ⚠️ Current Limitations
-
-This project is currently a software prototype and should not be treated as a certified laboratory calibration system.
-
-Important limitations include:
-
-### V1
-
-The UCI Gas Sensor Array Drift Dataset is primarily useful for studying sensor drift and classification behavior.
-
-Its class labels should not be interpreted as physical calibration reference values.
-
-### V2
-
-The calibration model is trained on the UCI Air Quality dataset.
-
-Model performance depends on the distribution and quality of that dataset.
-
-### V3
-
-The system does not yet provide:
-
-* Certified metrology workflows
-* Laboratory accreditation
-* Traceability to certified reference standards
-* Automated hardware communication
-* Real-time instrument communication
-* Automated recalibration
-* Sensor-specific physical calibration curves
-* Production-grade authentication/authorization
-* Distributed deployment
-* Comprehensive automated test coverage
-
-Therefore, V3 should currently be considered a **calibration management prototype**, not a certified calibration platform.
-
----
-
-# 🛣️ Roadmap
-
-## ✅ V1 — Sensor Drift Analysis
-
-Completed.
-
-* Dataset ingestion
-* Sensor feature analysis
-* Batch analysis
-* Drift measurement
-* Temporal validation
-* Drift compensation experiments
-* Streamlit dashboard
-
----
-
-## ✅ V2 — Machine Learning Calibration
-
-Completed.
-
-* Air Quality dataset
-* Missing-value cleaning
-* Calibration dataset construction
-* Regression model
-* Chronological validation
-* Error analysis
-* Feature analysis
-* Model comparison
-* Final model
-* Streamlit prediction application
-
----
-
-## ✅ V3 — Calibration Management System
-
-Completed.
-
-* SQLite database
-* SQLAlchemy ORM
-* Instrument management
-* Multiple instruments
-* Calibration records
-* Reference-value comparison
-* Tolerance-based PASS/FAIL
-* Calibration history
-* Dashboard statistics
-* Calibration trends
-* PDF calibration reports
-* Validation testing
-* Git release `v3.0.0`
-
----
-
-## 🔜 V4 — API + Scheduling
-
-Planned.
-
-Potential capabilities:
-
-```text
-FastAPI
-REST endpoints
-Calibration API
-Instrument API
-Calibration history API
-Background jobs
-Scheduled calibration checks
-Automated notifications
-API authentication
-```
-
----
-
-## 🔜 V5 — Multi-Instrument Platform
-
-Planned.
-
-Potential capabilities:
-
-```text
-Multiple instrument types
-Instrument fleets
-Centralized calibration management
-Role-based access
-Organization management
-Audit logs
-Calibration certificates
-Advanced reporting
-```
-
----
-
-## 🔜 V6 — Real Hardware + Laboratory Deployment
-
-Long-term goal.
-
-Potential capabilities:
-
-```text
-Real instrument communication
-Serial / USB communication
-Industrial protocols
-Real-time sensor acquisition
-Automated calibration procedures
-Reference instruments
-Laboratory workflows
-Hardware-in-the-loop testing
-Traceability
-Production deployment
-```
-
----
-
-# 🏷️ Releases
-
-Current releases:
-
-```text
-v1.0.0 — Sensor Drift Analysis
-v2.0.0 — Machine Learning Calibration
-v3.0.0 — Calibration Management System
-```
-
-The V3 release is tagged in Git as:
-
-```text
-v3.0.0
+310 passed
+2 warnings
 ```
 
 ---
@@ -1133,8 +1253,6 @@ v3.0.0
 
 Used for V1 sensor drift and temporal robustness experiments.
 
-Dataset:
-
 [https://archive.ics.uci.edu/dataset/224/gas+sensor+array+drift+dataset](https://archive.ics.uci.edu/dataset/224/gas+sensor+array+drift+dataset)
 
 ---
@@ -1143,46 +1261,200 @@ Dataset:
 
 Used for V2 CO calibration modeling.
 
-Dataset:
-
 [https://archive.ics.uci.edu/dataset/360/air+quality](https://archive.ics.uci.edu/dataset/360/air+quality)
+
+Always review the applicable dataset terms and licensing conditions before redistribution or commercial use.
 
 ---
 
-# 📌 Engineering Philosophy
+# ⚠️ Important Limitations
 
-The project follows a progressive engineering approach:
+This project must currently be considered a:
+
+> **Software prototype / engineering research platform**
+
+It is **not** a certified laboratory calibration system.
+
+The current implementation does not establish:
+
+* Metrological traceability
+* Certified reference-standard validation
+* Laboratory accreditation
+* Regulatory compliance
+* Physical instrument accuracy
+* Production laboratory validation
+* Certified calibration procedures
+* Production-grade security
+* Production authentication/authorization
+* Distributed production infrastructure
+* Regulatory certification
+
+---
+
+# 🔬 Simulation vs Real Laboratory Hardware
+
+One of the most important limitations is the distinction between software testing and physical validation.
+
+The project currently includes simulated hardware and hardware integration architecture.
+
+Therefore:
 
 ```text
-Observe
-  ↓
-Measure
-  ↓
-Model
-  ↓
-Validate
-  ↓
-Integrate
-  ↓
-Persist
-  ↓
-Report
-  ↓
-Automate
+Software Hardware Simulation
+            ≠
+Physical Laboratory Validation
 ```
 
-A model is not considered successful simply because it performs well on a random train/test split.
+The simulated instrument demonstrates that the software workflow can acquire, validate, calibrate, store, and report measurements.
 
-The project therefore emphasizes:
+It does **not** prove that a physical instrument produces accurate laboratory measurements.
 
-* Temporal validation
-* Error measurement
-* Distribution shift
-* Model comparison
-* Rejection of ineffective corrections
-* Persistent calibration records
-* Explicit tolerance criteria
-* Reproducible workflows
+Real deployment would require:
+
+```text
+Physical Instrument
+        +
+Validated Communication Protocol
+        +
+Certified Reference Standard
+        +
+Physical Calibration Procedure
+        +
+Traceability
+        +
+Laboratory Validation
+```
+
+---
+
+# 🧠 Engineering Lessons
+
+The project was deliberately developed incrementally.
+
+### Lesson 1 — Random validation can be misleading
+
+V1 showed:
+
+```text
+Random split: 98.99%
+Future Batch 10: 72.53%
+```
+
+Therefore, temporal validation is important for systems affected by distribution shift.
+
+### Lesson 2 — A machine-learning model is not a calibration system
+
+A prediction becomes part of a calibration workflow only when the system also manages:
+
+```text
+Reference
+Error
+Tolerance
+Decision
+Record
+History
+```
+
+### Lesson 3 — Failed experiments are useful
+
+The V1 drift correction reduced performance.
+
+Instead of forcing the correction into the system, it was rejected.
+
+### Lesson 4 — Software architecture should separate concerns
+
+The project separates:
+
+```text
+Data
+Model
+Calibration Logic
+Database
+API
+Hardware
+Reporting
+UI
+```
+
+This makes future extension easier.
+
+### Lesson 5 — Simulation has limits
+
+Simulated hardware is valuable for software development and testing.
+
+It cannot replace physical validation.
+
+---
+
+# 🛣️ Future Work
+
+Future work is intentionally left open until real hardware and laboratory resources are available.
+
+Potential future development includes:
+
+```text
+Real Instrument Integration
+        ↓
+Validated Hardware Protocols
+        ↓
+Certified Reference Standards
+        ↓
+Physical Calibration Experiments
+        ↓
+Instrument-Specific Models
+        ↓
+Traceability
+        ↓
+Production Deployment
+```
+
+These steps require appropriate physical equipment, reference standards, validation procedures, and potentially regulatory/compliance work.
+
+The current software milestone does not require those resources.
+
+---
+
+# 🏷️ Project Releases
+
+Development milestones:
+
+```text
+v1.0.0 — Sensor Drift Analysis
+v2.0.0 — Machine Learning Calibration
+v3.0.0 — Calibration Management System
+v4.0.0 — API + Scheduling
+v5.0.0 — Multi-Instrument Platform
+v6.0.0 — Hardware Integration Architecture
+```
+
+The V6 milestone represents the current software architecture and integration stage.
+
+---
+
+# 📌 Final Project Status
+
+```text
+┌─────────────────────────────────────────────┐
+│          LAB CALIBRATION SYSTEM             │
+├─────────────────────────────────────────────┤
+│ V1 Sensor Drift Analysis             ✅     │
+│ V2 ML Calibration                    ✅     │
+│ V3 Calibration Management            ✅     │
+│ V4 API + Scheduling                  ✅     │
+│ V5 Multi-Instrument Platform         ✅     │
+│ V6 Hardware Architecture             ✅     │
+│ PDF Calibration Reports              ✅     │
+│ Automated Test Suite                 ✅     │
+│                                             │
+│ Tests: 310 passed                           │
+│                                             │
+│ Physical Laboratory Validation        ⏳    │
+│ Certified Metrology                   ⏳    │
+│ Production Deployment                 ⏳    │
+└─────────────────────────────────────────────┘
+```
+
+The current software milestone is considered **complete for publication as a prototype/research engineering project**.
 
 ---
 
@@ -1192,7 +1464,7 @@ The project therefore emphasizes:
 
 Lab Calibration System
 
-Built as an evolving engineering project covering:
+Built as an independent engineering project covering:
 
 ```text
 Data Science
@@ -1201,43 +1473,54 @@ Sensor Analytics
 Calibration
 Database Engineering
 Software Engineering
+REST API Development
 Streamlit
-API Development
-Laboratory Automation
+Hardware Abstraction
+Laboratory Automation Concepts
 ```
 
 ---
 
-# ⭐ Project Status
+# ⭐ Final Statement
+
+The purpose of this project is not to claim that a simulated system has achieved laboratory-grade calibration.
+
+The purpose is to demonstrate the engineering progression from:
 
 ```text
-V1  ✅ Complete
-V2  ✅ Complete
-V3  ✅ Complete
-V4  🔜 Next
-V5  🔜 Planned
-V6  🔜 Long-term
+Raw Sensor Data
+      ↓
+Sensor Drift Analysis
+      ↓
+Calibration Modeling
+      ↓
+Calibration Management
+      ↓
+API Platform
+      ↓
+Multi-Instrument Architecture
+      ↓
+Hardware Integration
+      ↓
+Reporting
 ```
 
-The current stable milestone is:
-
-```text
-V3.0.0
-```
-
----
-
-## License
-
-Review the individual dataset licenses/terms before redistributing datasets or using them commercially.
-
-The software project's license should be defined separately before public/commercial distribution.
+The resulting system provides a foundation that can be physically validated and extended when appropriate laboratory hardware and reference standards become available.
 
 ````
 
-### One important correction
+### One important correction from your old README
 
-I intentionally **did not claim that V3 is a certified laboratory calibration system**. What you have built is a strong prototype with a real database, ML model integration, tolerance-based calibration workflow, audit history, and PDF reporting. Certification, traceability, hardware integration, and metrology controls are still future work.
+Your old README said V4, V5 and V6 were still planned, and it called V3 the current stable milestone. That is now outdated. :contentReference[oaicite:0]{index=0}
 
+The new README fixes that and reflects the **actual current software state**.
 
+After you replace it, run:
 
+```bat
+git add README.md
+git commit -m "Update README for complete V1-V6 project"
+git push origin main
+````
+
+Then the project is in a good state to **publish/show on GitHub and stop development until you have access to real hardware**.
