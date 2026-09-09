@@ -41,3 +41,6 @@ data/v2/*.zip
 database/*.db
 database/*.sqlite
 database/*.sqlite3
+
+# V5 test artifacts
+models/v5_test_model.joblib
