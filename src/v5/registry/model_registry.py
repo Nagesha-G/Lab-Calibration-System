@@ -105,3 +105,37 @@ def get_approved_models():
 
     finally:
         db.close()
+
+
+def approve_model(model_id: int):
+    db = SessionLocal()
+
+    try:
+        model = (
+            db.query(Model)
+            .filter(Model.model_id == model_id)
+            .first()
+        )
+
+        if model is None:
+            raise ValueError(
+                f"Model {model_id} does not exist."
+            )
+
+        if model.status == "approved":
+            return model
+
+        model.status = "approved"
+
+        db.commit()
+        db.refresh(model)
+
+        return model
+
+    except Exception:
+        db.rollback()
+        raise
+
+    finally:
+        db.close()
+

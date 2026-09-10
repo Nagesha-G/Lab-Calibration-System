@@ -47,6 +47,59 @@ def api_delete(path):
     response.raise_for_status()
     return response.json()
 
+# ============================================================
+# AUTHENTICATION
+# ============================================================
+
+def login_page():
+    st.title("🔐 Lab Calibration System")
+    st.subheader("Login")
+
+    username = st.text_input(
+        "Username",
+        key="login_username",
+    )
+
+    password = st.text_input(
+        "Password",
+        type="password",
+        key="login_password",
+    )
+
+    if st.button(
+        "Login",
+        type="primary",
+        width="stretch",
+    ):
+        if not username.strip() or not password:
+            st.warning(
+                "Username and password are required."
+            )
+            return
+
+        try:
+            result = api_post(
+                "/login",
+                {
+                    "username": username,
+                    "password": password,
+                },
+            )
+
+            st.session_state["authenticated"] = True
+            st.session_state["user_id"] = result["user_id"]
+            st.session_state["username"] = result["username"]
+            st.session_state["user_role"] = result["role"]
+
+            st.success(
+                f'Welcome, {result["username"]}.'
+            )
+
+            st.rerun()
+
+        except Exception as exc:
+            show_api_error(exc)
+
 
 def show_api_error(exc):
     if isinstance(exc, requests.exceptions.ConnectionError):
@@ -800,14 +853,246 @@ def summary_page():
 
 
 # ============================================================
+# USER MANAGEMENT
+# ============================================================
+
+def users_page():
+    st.header("👥 User Management")
+
+    # --------------------------------------------------------
+    # Create User
+    # --------------------------------------------------------
+
+    st.subheader("Create User")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        username = st.text_input(
+            "Username",
+            key="new_username",
+        )
+
+        email = st.text_input(
+            "Email",
+            key="new_email",
+        )
+
+    with col2:
+        password = st.text_input(
+            "Password",
+            type="password",
+            key="new_password",
+        )
+
+        role = st.selectbox(
+            "Role",
+            [
+                "operator",
+                "admin",
+            ],
+            key="new_role",
+        )
+
+    if st.button(
+        "Create User",
+        type="primary",
+    ):
+        if not username.strip():
+            st.warning("Username is required.")
+            return
+
+        if not email.strip():
+            st.warning("Email is required.")
+            return
+
+        if not password:
+            st.warning("Password is required.")
+            return
+
+        try:
+            result = api_post(
+                "/users",
+                {
+                    "username": username,
+                    "email": email,
+                    "password": password,
+                    "role": role,
+                },
+            )
+
+            st.success(
+                f'User "{result["username"]}" created successfully.'
+            )
+
+            st.json(result)
+
+        except Exception as exc:
+            show_api_error(exc)
+
+    st.divider()
+
+    # --------------------------------------------------------
+    # User Lookup
+    # --------------------------------------------------------
+
+    st.subheader("User Information")
+
+    user_id = st.number_input(
+        "User ID",
+        min_value=1,
+        value=1,
+        step=1,
+        key="lookup_user_id",
+    )
+
+    if st.button(
+        "Load User",
+        key="load_user",
+    ):
+        try:
+            result = api_get(
+                f"/users/{int(user_id)}"
+            )
+
+            st.json(result)
+
+        except Exception as exc:
+            show_api_error(exc)
+
+    st.divider()
+
+    # --------------------------------------------------------
+    # Deactivate User
+    # --------------------------------------------------------
+
+    st.subheader("Deactivate User")
+
+    deactivate_id = st.number_input(
+        "User ID to deactivate",
+        min_value=1,
+        value=1,
+        step=1,
+        key="deactivate_user_id",
+    )
+
+    if st.button(
+        "Deactivate User",
+        key="deactivate_user",
+    ):
+        try:
+            result = api_post(
+                f"/users/{int(deactivate_id)}/deactivate"
+            )
+
+            st.success(
+                f'User "{result["username"]}" is now inactive.'
+            )
+
+            st.json(result)
+
+        except Exception as exc:
+            show_api_error(exc)
+
+
+# ============================================================
 # MODELS
 # ============================================================
 
 def models_page():
-    st.header("🤖 Models")
+    st.header("🤖 Model Management")
+
+    # ========================================================
+    # REGISTER MODEL
+    # ========================================================
+
+    st.subheader("Register Model")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        model_name = st.text_input(
+            "Model Name",
+            key="model_name",
+        )
+
+        model_version = st.text_input(
+            "Model Version",
+            value="1.0.0",
+            key="model_version",
+        )
+
+        instrument_type = st.text_input(
+            "Instrument Type",
+            value="gas_analyzer",
+            key="model_instrument_type",
+        )
+
+    with col2:
+        target_variable = st.text_input(
+            "Target Variable",
+            value="CO(GT)",
+            key="model_target_variable",
+        )
+
+        framework = st.text_input(
+            "Framework",
+            value="scikit-learn",
+            key="model_framework",
+        )
+
+        artifact_path = st.text_input(
+            "Artifact Path",
+            value="models/v2/co_calibration_model.joblib",
+            key="model_artifact_path",
+        )
+
+    if st.button(
+        "Register Model",
+        type="primary",
+        key="register_model",
+    ):
+        if not model_name.strip():
+            st.warning("Model name is required.")
+            return
+
+        if not model_version.strip():
+            st.warning("Model version is required.")
+            return
+
+        if not artifact_path.strip():
+            st.warning("Artifact path is required.")
+            return
+
+        try:
+            result = api_post(
+                "/models/register",
+                {
+                    "model_name": model_name,
+                    "model_version": model_version,
+                    "instrument_type": instrument_type,
+                    "target_variable": target_variable,
+                    "framework": framework,
+                    "artifact_path": artifact_path,
+                },
+            )
+
+            st.success(
+                f'Model "{result["model_name"]}" registered successfully.'
+            )
+
+            st.json(result)
+
+        except Exception as exc:
+            show_api_error(exc)
+
+    st.divider()
+
+    # ========================================================
+    # REGISTERED MODELS
+    # ========================================================
 
     try:
-
         all_models = api_get(
             "/models"
         )
@@ -818,39 +1103,105 @@ def models_page():
 
         st.subheader("Registered Models")
 
-        if all_models["models"]:
+        models = all_models.get(
+            "models",
+            [],
+        )
 
+        if models:
             st.dataframe(
-                all_models["models"],
+                models,
                 width="stretch",
             )
-
         else:
-
             st.info(
                 "No models registered."
             )
+
+        # ====================================================
+        # APPROVE MODEL
+        # ====================================================
+
+        st.divider()
+
+        st.subheader("Model Approval")
+
+        registered_models = [
+            model
+            for model in models
+            if model.get("status") != "approved"
+        ]
+
+        if registered_models:
+
+            model_options = {
+                (
+                    f'{model["model_id"]} — '
+                    f'{model["model_name"]} '
+                    f'v{model["model_version"]}'
+                ): model["model_id"]
+                for model in registered_models
+            }
+
+            selected_model = st.selectbox(
+                "Select model to approve",
+                list(model_options.keys()),
+                key="approval_model_selector",
+            )
+
+            selected_model_id = model_options[
+                selected_model
+            ]
+
+            if st.button(
+                "Approve Selected Model",
+                type="primary",
+                key="approve_model",
+            ):
+                try:
+                    result = api_post(
+                        f"/models/{selected_model_id}/approve"
+                    )
+
+                    st.success(
+                        f'Model "{result["model_name"]}" approved.'
+                    )
+
+                    st.json(result)
+
+                except Exception as exc:
+                    show_api_error(exc)
+
+        else:
+            st.info(
+                "There are no registered models waiting for approval."
+            )
+
+        # ====================================================
+        # APPROVED MODELS
+        # ====================================================
 
         st.divider()
 
         st.subheader("Approved Models")
 
-        if approved_models["models"]:
+        approved = approved_models.get(
+            "models",
+            [],
+        )
 
+        if approved:
             st.dataframe(
-                approved_models["models"],
+                approved,
                 width="stretch",
             )
-
         else:
-
             st.info(
                 "No approved models."
             )
 
     except Exception as exc:
         show_api_error(exc)
-
 
 # ============================================================
 # HARDWARE
@@ -1169,6 +1520,12 @@ def analytics_page():
 # ============================================================
 
 def main():
+    if not st.session_state.get(
+        "authenticated",
+        False,
+    ):
+        login_page()
+        return
 
     st.title(
         "🔬 Lab Calibration System"
@@ -1216,6 +1573,7 @@ def main():
             "Summary",
             "Analytics",
             "Models",
+            "Users",
             "Hardware",
         ],
     )
@@ -1243,6 +1601,9 @@ def main():
 
     elif page == "Models":
         models_page()
+    
+    elif page == "Users":
+        users_page()
 
     elif page == "Hardware":
         hardware_page()

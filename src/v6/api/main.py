@@ -27,6 +27,15 @@ from src.v5.services.policy_service import (
 )
 from src.v5.registry.model_registry import (
     get_approved_models,
+    register_model,
+    approve_model,
+)
+
+from src.v5.services.user_service import (
+    create_user,
+    get_user,
+    authenticate_user,
+    deactivate_user,
 )
 
 from src.v6.api.calibration_history import (
@@ -89,6 +98,26 @@ class CalibrationResponse(BaseModel):
     estimated_value: float
     reference_value: float
     status: str
+
+class UserCreateRequest(BaseModel):
+    username: str
+    email: str
+    password: str
+    role: str = "operator"
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class ModelRegisterRequest(BaseModel):
+    model_name: str
+    model_version: str
+    instrument_type: str
+    target_variable: str
+    framework: str
+    artifact_path: str
 
 
 @app.get("/")
@@ -705,6 +734,202 @@ def get_approved_models_api():
         ],
     }
 
+# ============================================================
+# USER MANAGEMENT API
+# ============================================================
+
+
+@app.post("/users")
+def create_user_api(request: UserCreateRequest):
+    try:
+        user = create_user(
+            username=request.username,
+            email=request.email,
+            password=request.password,
+            role=request.role,
+        )
+
+        return {
+            "user_id": user.user_id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "status": user.status,
+            "created_at": (
+                user.created_at.isoformat()
+                if user.created_at
+                else None
+            ),
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@app.get("/users/{user_id}")
+def get_user_api(user_id: int):
+    if user_id < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="user_id must be greater than 0.",
+        )
+
+    user = get_user(user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found.",
+        )
+
+    return {
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "status": user.status,
+        "created_at": (
+            user.created_at.isoformat()
+            if user.created_at
+            else None
+        ),
+    }
+
+
+@app.post("/login")
+def login_api(request: LoginRequest):
+    try:
+        user = authenticate_user(
+            username=request.username,
+            password=request.password,
+        )
+
+        if user is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid username or password.",
+            )
+
+        return {
+            "authenticated": True,
+            "user_id": user.user_id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "status": user.status,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Authentication failed.",
+        ) from exc
+
+
+@app.post("/users/{user_id}/deactivate")
+def deactivate_user_api(user_id: int):
+    if user_id < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="user_id must be greater than 0.",
+        )
+
+    try:
+        user = deactivate_user(user_id)
+
+        return {
+            "user_id": user.user_id,
+            "username": user.username,
+            "status": user.status,
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+
+# ============================================================
+# MODEL MANAGEMENT API
+# ============================================================
+
+
+@app.post("/models/register")
+def register_model_api(request: ModelRegisterRequest):
+    try:
+        model = register_model(
+            model_name=request.model_name,
+            model_version=request.model_version,
+            instrument_type=request.instrument_type,
+            target_variable=request.target_variable,
+            framework=request.framework,
+            artifact_path=request.artifact_path,
+            status="registered",
+        )
+
+        return {
+            "model_id": model.model_id,
+            "model_name": model.model_name,
+            "model_version": model.model_version,
+            "instrument_type": model.instrument_type,
+            "target_variable": model.target_variable,
+            "framework": model.framework,
+            "artifact_path": model.artifact_path,
+            "artifact_hash": model.artifact_hash,
+            "status": model.status,
+            "created_at": (
+                model.created_at.isoformat()
+                if model.created_at
+                else None
+            ),
+        }
+
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@app.post("/models/{model_id}/approve")
+def approve_model_api(model_id: int):
+    if model_id < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="model_id must be greater than 0.",
+        )
+
+    try:
+        model = approve_model(model_id)
+
+        return {
+            "model_id": model.model_id,
+            "model_name": model.model_name,
+            "model_version": model.model_version,
+            "instrument_type": model.instrument_type,
+            "target_variable": model.target_variable,
+            "framework": model.framework,
+            "status": model.status,
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================
